@@ -278,6 +278,6 @@ NINGLET 的设计天然支持商业化拓展：
 
 **让 AI 写短篇，但读者闻不出 AI 味。**
 
-*Made with ❤️ by [小宁 (NING)](https://github.com/XN-289)*
+*Made with ❤️ by kealin*
 
 </div>
