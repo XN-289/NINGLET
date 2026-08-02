@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NINGLET 短篇创作台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=1.3.0">
+</head>
+<body class="project-short">
+    <header class="topbar">
+        <div class="brand">NINGLET 短篇创作台 <span class="ver">v1.0</span></div>
+        <div class="health" id="health">连接中…</div>
+    </header>
+
+    <main class="layout">
+        <!-- 左栏：设定 + 配置 -->
+        <aside class="sidebar">
+            <section class="card">
+                <h2>故事设定</h2>
+                <label>故事构思（一两句话，你想写什么）</label>
+                <textarea id="story-desc" rows="4" placeholder="例如：离婚三年后前夫跪在雨里求我复婚"></textarea>
+                <label>背景</label>
+                <textarea id="field-background" rows="2" placeholder="时代/地点/世界观（可空）"></textarea>
+                <label>人物</label>
+                <textarea id="field-characters" rows="2" placeholder="主角和关键人物（可空）"></textarea>
+                <label>风格偏好</label>
+                <textarea id="field-style" rows="2" placeholder="想要的语言风格（可空）"></textarea>
+            </section>
+
+            <section class="card">
+                <h2>短篇配置</h2>
+                <div class="row">
+                    <label>频道</label>
+                    <select id="short-channel">
+                        <option value="female">女频</option>
+                        <option value="male">男频</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label>题材</label>
+                    <select id="short-genre"></select>
+                </div>
+                <div class="row">
+                    <label>平台</label>
+                    <select id="short-platform"></select>
+                </div>
+                <div class="row">
+                    <label>目标字数</label>
+                    <input id="short-target-words" type="number" value="25000" min="3000" max="50000" step="1000">
+                </div>
+                <div id="route-hint" class="hint">输入字数后自动判断生成模式</div>
+            </section>
+        </aside>
+
+        <!-- 中栏：三步生成 -->
+        <section class="main-col">
+            <section class="card step">
+                <div class="step-head">
+                    <h2>① 构思方案</h2>
+                    <button id="btn-idea" class="btn primary">生成构思</button>
+                </div>
+                <p class="desc">锁定本篇要命中的单一情绪，按题材公式拆三幕，列出反转点，写出开篇三行。</p>
+                <textarea id="short-idea" rows="8" placeholder="点「生成构思」后这里出现情绪轴心、三幕结构、反转点、开篇三行"></textarea>
+            </section>
+
+            <section class="card step">
+                <div class="step-head">
+                    <h2>② 分节大纲</h2>
+                    <button id="btn-outline" class="btn primary">生成分节大纲</button>
+                </div>
+                <p class="desc">一次性规划全部节拍（每节含情绪烈度、目标字数、开头/结尾钩子），自动拆成下方各节。</p>
+                <textarea id="short-outline" rows="8" placeholder="点「生成分节大纲」后这里出现各节拍表，并自动生成下方章节"></textarea>
+            </section>
+
+            <section class="card step">
+                <div class="step-head">
+                    <h2>③ 正文（按节）</h2>
+                    <button id="btn-all-content" class="btn accent">批量生成全部正文</button>
+                    <button id="btn-export-all" class="btn ghost">导出全文（Markdown）</button>
+                    <button id="btn-export-copy" class="btn ghost">复制全文</button>
+                </div>
+                <div id="chapters" class="chapters"></div>
+            </section>
+        </section>
+    </main>
+
+    <!-- AI味诊断报告弹窗 -->
+    <div id="scan-modal" class="scan-modal" style="display:none;" onclick="if(event.target===this)document.getElementById('scan-modal').style.display='none'">
+        <div class="scan-modal-box">
+            <div class="scan-modal-head">
+                <span id="scan-title">AI味诊断报告</span>
+                <button class="scan-close" onclick="document.getElementById('scan-modal').style.display='none'">✕</button>
+            </div>
+            <div id="scan-body" class="scan-body"></div>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script src="{{ url_for('static', filename='app.js') }}?v=1.3.0"></script>
+</body>
+</html>

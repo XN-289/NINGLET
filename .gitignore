@@ -1,0 +1,39 @@
+﻿__pycache__/
+*.pyc
+.env
+.env.local
+.env.production
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.DS_Store
+Thumbs.db
+*.log
+*.db
+*.sqlite
+*.sqlite3
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===== 脱敏：产出目录真实内容不公开 =====
+# 只保留各目录的 README.md 占位 + 方法论文档
+产出/拆解文章/*
+!产出/拆解文章/README.md
+产出/可发布文章/*
+!产出/可发布文章/README.md
+产出/改编库/*
+!产出/改编库/README.md
+产出/灵感库/*
+!产出/灵感库/README.md
+产出/素材库/*
+!产出/素材库/README.md
+
+# 临时笔记/备份
+_p.txt
+_ss.txt
+*.bak
+*.bak.*
