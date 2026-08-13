@@ -224,6 +224,20 @@ return {
       },
     }));
 
+    harness.handle('list_books', async function () {
+      const base = lastBase || fallbackRoot;
+      const dir = await fs.resolve('novels', { cwd: base });
+      const info = await fs.stat(dir);
+      if (info === undefined) return [];
+      const entries = await fs.listDir(dir);
+      const books = [];
+      for (const e of entries) {
+        if (e.type !== 'directory') continue;
+        const state = await readState(e.name, base);
+        if (state && state.book) books.push({ bookId: state.book.bookId, title: state.book.title });
+      }
+      return books;
+    });
     harness.handle('list_chapters', async function (args) {
       const base = lastBase || fallbackRoot;
       const state = await readState(args.bookId, base);

@@ -1,0 +1,8 @@
+# NINGLET 小说 Agent —— 目标组合草案（贯通线阶段工具/UI 仍走动态插件）
+# 正式固化时：把 novel-tools / novel-ui 指向 DSH checkout 里的真实 package。
+- id: novel-tools
+  name: '@deepseek-ai/dsh-tool-ninglet'
+- id: novel-ui
+  name: '@deepseek-ai/dsh-client-ninglet'
+- id: novel-prompt
+  name: '@deepseek-ai/dsh-prompt-ninglet'
