@@ -1,4 +1,4 @@
-﻿__pycache__/
+__pycache__/
 *.pyc
 .env
 .env.local
@@ -37,3 +37,5 @@ _p.txt
 _ss.txt
 *.bak
 *.bak.*
+
+node_modules/
