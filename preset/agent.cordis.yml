@@ -1,9 +1,7 @@
 # NINGLET 小说 Agent —— 目标组合
-# 已固化：Host 工具包 @deepseek-ai/dsh-tool-ninglet（4 个 novel_* 工具）
-# 待固化：Client 章节面板包 + 提示词包（动态插件 client-novel-ui.js 仍作为开发探针）
+# 已固化（提交进 harness）：Host 工具包 + 提示词包
+# 待固化：Client 章节面板包（动态插件 client-novel-ui.js 仍作为开发探针）
 - id: novel-tools
   name: '@deepseek-ai/dsh-tool-ninglet'
-# - id: novel-ui
-#   name: '@deepseek-ai/dsh-client-ninglet'
-# - id: novel-prompt
-#   name: '@deepseek-ai/dsh-prompt-ninglet'
+- id: novel-prompt
+  name: '@deepseek-ai/dsh-prompt-ninglet'
