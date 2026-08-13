@@ -3,21 +3,27 @@ return {
     const slots = ctx.get('slots');
     if (slots === undefined) return;
 
-    // 安静编辑部设计系统（docs/design-system.md）：发丝线、衬线正文、去投影、克制配色
+    // 安静编辑部设计系统（docs/design-system.md）：纸墨显式色，不依赖 DSH 主题变量，自包含
     styles.insert(`
-      .ninglet-fab { position: fixed; right: 20px; bottom: 20px; z-index: 9999; pointer-events: auto; cursor: pointer; font-size: 13px; padding: 8px 16px; border: 1px solid var(--border); border-radius: 2px; background: var(--background); color: var(--foreground); transition: opacity 0.6s; }
-      .ninglet-fab:hover { opacity: 0.8; }
-      .ninglet-panel { position: fixed; right: 20px; bottom: 64px; z-index: 9999; pointer-events: auto; width: 400px; max-height: 70vh; overflow: auto; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: 2px; animation: ninglet-fade 0.6s ease; }
+      .ninglet-fab { position: fixed; right: 20px; bottom: 20px; z-index: 9999; pointer-events: auto; cursor: pointer; font-size: 13px; padding: 8px 16px; background: #F4F2EC; color: #2A2A28; border: 1px solid #D9D6CD; border-radius: 2px; transition: opacity 0.6s; }
+      .ninglet-fab:hover { opacity: 0.85; }
+      .ninglet-panel { position: fixed; right: 20px; bottom: 64px; z-index: 9999; pointer-events: auto; width: 400px; max-height: 70vh; overflow: auto; background: #F4F2EC; color: #2A2A28; border: 1px solid #D9D6CD; border-radius: 2px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); animation: ninglet-fade 0.6s ease; }
       @keyframes ninglet-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-      .ninglet-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+      .ninglet-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #D9D6CD; font-size: 13px; }
       .ninglet-panel-body { padding: 8px 16px 16px; }
-      .ninglet-book { padding: 10px 0; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
+      .ninglet-book { padding: 10px 0; cursor: pointer; font-size: 14px; border-bottom: 1px solid #D9D6CD; }
       .ninglet-book:hover { opacity: 0.8; }
-      .ninglet-chapter { padding: 9px 0; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); color: var(--muted-foreground, #7C7B76); transition: color 0.3s; }
-      .ninglet-chapter:hover { color: var(--foreground); }
-      .ninglet-empty { color: var(--muted-foreground, #7C7B76); font-size: 13px; padding: 16px 0; }
+      .ninglet-chapter { padding: 9px 0; cursor: pointer; font-size: 13px; border-bottom: 1px solid #D9D6CD; color: #7C7B76; transition: color 0.3s; }
+      .ninglet-chapter:hover { color: #2A2A28; }
+      .ninglet-empty { color: #7C7B76; font-size: 13px; padding: 16px 0; }
       .ninglet-prose { margin-top: 16px; font-family: Georgia, 'Noto Serif SC', 'Songti SC', serif; font-size: 15px; line-height: 1.9; white-space: pre-wrap; }
-      .ninglet-close { cursor: pointer; background: none; border: none; color: var(--muted-foreground, #7C7B76); font-size: 15px; }
+      .ninglet-close { cursor: pointer; background: none; border: none; color: #7C7B76; font-size: 15px; }
+      @media (prefers-color-scheme: dark) {
+        .ninglet-fab, .ninglet-panel { background: #1C1B19; color: #EDEBE4; border-color: #35332E; }
+        .ninglet-panel-head, .ninglet-book, .ninglet-chapter { border-color: #35332E; }
+        .ninglet-chapter, .ninglet-empty, .ninglet-close { color: #8B8A85; }
+        .ninglet-chapter:hover { color: #EDEBE4; }
+      }
     `);
 
     function NovelPanel() {
