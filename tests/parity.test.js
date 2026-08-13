@@ -31,3 +31,13 @@ test('插件 readState 含 bookId 校验（防路径穿越）', () => {
   const matches = plugin.match(/unsafe bookId/g) || [];
   assert.ok(matches.length >= 3, `插件 bookId 校验入口不足（预期 ≥3，实际 ${matches.length}）`);
 });
+
+test('插件 validateState 校验 outline/characters 为数组', () => {
+  assert.ok(plugin.includes('outline 必须为数组'), '插件缺 outline 校验');
+  assert.ok(plugin.includes('characters 必须为数组'), '插件缺 characters 校验');
+});
+
+test('插件含 get_structure 聚合 RPC 与观察者抽取', () => {
+  assert.ok(plugin.includes('get_structure'), '插件缺 get_structure RPC');
+  assert.ok(plugin.includes('小说观察者'), '插件缺观察者抽取');
+});
