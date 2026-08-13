@@ -1,7 +1,6 @@
 return {
   inject: ['llm', 'fs'],
   apply(ctx) {
-    // ============ 内联自 src/book-id.js ============
     function slugify(title) {
       return String(title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
@@ -17,7 +16,6 @@ return {
     function isValidBookId(id) {
       return typeof id === 'string' && /^[a-z0-9][a-z0-9_-]{0,63}$/.test(id) && !id.includes('..');
     }
-    // ============ 内联自 src/word-count.js ============
     const CJK = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]/;
     function detectLanguage(text) {
       const cjk = (text.match(new RegExp(CJK.source, 'g')) || []).length;
@@ -29,7 +27,6 @@ return {
       const t = text.trim();
       return t.length === 0 ? 0 : t.split(/\s+/).length;
     }
-    // ============ 内联自 src/anti-ai-engine.js ============
     const DEFAULT_FORBIDDEN = ['心中一凛', '不由自主', '眼中闪过一丝', '嘴角勾起', '嘴角微微上扬', '淡淡道', '轻声道', '沉吟', '半晌', '不禁', '心头一颤', '意味深长', '复杂难明', '难以言表', '五味杂陈', '百感交集'];
     function scanForbidden(text, forbidden) {
       const words = forbidden || DEFAULT_FORBIDDEN;
@@ -68,7 +65,6 @@ return {
     function rewriteRulesText() {
       return '禁用词（出现即改写）：' + DEFAULT_FORBIDDEN.join('、') + '。避免"的"字密度过高；避免句长均匀；避免排比三连与段尾抒情；用动作代替"淡淡道/轻声道"。';
     }
-    // ============ 内联自 src/state-schema.js（精简 validateState） ============
     function validateState(s) {
       const errors = [];
       const b = s && s.book;
@@ -83,7 +79,18 @@ return {
     const llm = ctx.llm;
     const fs = ctx.fs;
     const sandbox = ctx.get('sandboxPolicy');
-    const base = sandbox ? sandbox.workspaceRoot : '.';
+    const fallbackRoot = sandbox ? sandbox.workspaceRoot : '.';
+    let lastBase = null;
+    let lastPolicy = null;
+
+    // 工具执行时从 exec.agent.session 取会话工作区 + 解析沙箱策略；RPC 处理器回退用缓存值。
+    function baseFor(exec) {
+      const session = (exec && exec.agent) ? exec.agent.session : undefined;
+      const b = session ? session.header.cwd : fallbackRoot;
+      lastBase = b;
+      if (sandbox) lastPolicy = sandbox.resolve(session ? { session: session } : {});
+      return b;
+    }
 
     async function callModel(prompt, systemText) {
       const modelSvc = ctx.get('agentDefaultModel');
@@ -103,41 +110,42 @@ return {
       return out.trim();
     }
 
-    async function readState(bookId) {
+    async function readState(bookId, base) {
       const t = await fs.resolve('novels/' + bookId + '/story/state/state.json', { cwd: base });
       const info = await fs.stat(t);
       if (info === undefined) return null;
       return JSON.parse(await fs.readText(t));
     }
 
-    async function writeState(bookId, state) {
+    async function writeState(bookId, state, base) {
       const v = validateState(state);
       if (!v.ok) throw new Error('状态非法，拒绝写入：' + v.errors.join('; '));
       const t = await fs.resolve('novels/' + bookId + '/story/state/state.json', { cwd: base });
-      await fs.writeText(t, JSON.stringify(state, null, 2));
+      await fs.writeText(t, JSON.stringify(state, null, 2), undefined, undefined, lastPolicy);
     }
 
-    async function writeChapter(bookId, index, body) {
+    async function writeChapter(bookId, index, body, base) {
       const n = String(index).padStart(3, '0');
       const t = await fs.resolve('novels/' + bookId + '/chapters/' + n + '.md', { cwd: base });
-      await fs.writeText(t, body);
+      await fs.writeText(t, body, undefined, undefined, lastPolicy);
       return 'novels/' + bookId + '/chapters/' + n + '.md';
     }
 
     harness.registerTool(ctx, harness.defineTool({
       name: 'novel_create_book',
       description: 'Create a new novel book. Generates a safe bookId and initializes story state files on disk.',
-      parameters: { title: { type: 'string', required: true }, genre: { type: 'string', required: false }, brief: { type: 'string', required: false } },
+      parameters: { title: { type: 'string', required: true }, genre: { type: 'string' }, brief: { type: 'string' } },
       output: { schema: { type: 'string' }, render: function (_a, v) { return [{ type: 'text', text: v }]; } },
-      execute: async function (args) {
+      execute: async function (args, exec) {
+        const base = baseFor(exec);
         const bookId = makeBookId(args.title);
-        const existing = await readState(bookId);
+        const existing = await readState(bookId, base);
         if (existing) return '书已存在：' + bookId + '（不覆盖）';
         const state = {
           book: { bookId: bookId, title: args.title, genre: args.genre || '', targetChapters: 50, chapterWords: 2000, nextChapterIndex: 1 },
           chapters: [], summaries: [], hooks: [],
         };
-        await writeState(bookId, state);
+        await writeState(bookId, state, base);
         return '已创建书《' + args.title + '》bookId=' + bookId + '，状态写入 novels/' + bookId + '/story/state/state.json';
       },
     }));
@@ -145,11 +153,12 @@ return {
     harness.registerTool(ctx, harness.defineTool({
       name: 'novel_write_chapter',
       description: 'Write the next chapter of a book: plan → compose → write → anti-AI audit → revise (max 1) → settle. Enforces anti-AI-flavor rules and persists chapter + state.',
-      parameters: { bookId: { type: 'string', required: true }, words: { type: 'number', required: false }, context: { type: 'string', required: false } },
+      parameters: { bookId: { type: 'string', required: true }, words: { type: 'number' }, context: { type: 'string' } },
       output: { schema: { type: 'string' }, render: function (_a, v) { return [{ type: 'text', text: v }]; } },
-      execute: async function (args) {
+      execute: async function (args, exec) {
+        const base = baseFor(exec);
         if (!isValidBookId(args.bookId)) throw new Error('unsafe bookId');
-        const state = await readState(args.bookId);
+        const state = await readState(args.bookId, base);
         if (!state) return '书 ' + args.bookId + ' 不存在，请先 novel_create_book';
         const index = state.book.nextChapterIndex;
         const targetWords = args.words || state.book.chapterWords;
@@ -171,7 +180,7 @@ return {
           if (rew) { body = rew; ai = detectAI(body); revised = true; }
         }
 
-        const path = await writeChapter(args.bookId, index, body);
+        const path = await writeChapter(args.bookId, index, body, base);
         const chapter = {
           index: index, title: '第' + index + '章', wordCount: countWords(body), filePath: path,
           aiTasteScore: ai.score, status: ai.hits.length === 0 ? 'approved' : 'revised',
@@ -182,7 +191,7 @@ return {
           summaries: state.summaries.concat([{ index: index, text: body.slice(0, 200) }]),
           hooks: state.hooks,
         };
-        await writeState(args.bookId, next);
+        await writeState(args.bookId, next, base);
         return '第 ' + index + ' 章完成：字数 ' + chapter.wordCount + '，AI味评分 ' + ai.score + (revised ? '（已自动修订）' : '') + '，落盘 ' + path;
       },
     }));
@@ -192,8 +201,9 @@ return {
       description: 'List all chapters of a book with index/title/wordCount/aiTasteScore.',
       parameters: { bookId: { type: 'string', required: true } },
       output: { schema: { type: 'string' }, render: function (_a, v) { return [{ type: 'text', text: v }]; } },
-      execute: async function (args) {
-        const state = await readState(args.bookId);
+      execute: async function (args, exec) {
+        const base = baseFor(exec);
+        const state = await readState(args.bookId, base);
         if (!state) return '书不存在';
         return JSON.stringify(state.chapters.map(function (c) { return { index: c.index, title: c.title, wordCount: c.wordCount, score: c.aiTasteScore }; }));
       },
@@ -204,7 +214,8 @@ return {
       description: 'Read the full text of one chapter.',
       parameters: { bookId: { type: 'string', required: true }, index: { type: 'number', required: true } },
       output: { schema: { type: 'string' }, render: function (_a, v) { return [{ type: 'text', text: v }]; } },
-      execute: async function (args) {
+      execute: async function (args, exec) {
+        const base = baseFor(exec);
         const n = String(args.index).padStart(3, '0');
         const t = await fs.resolve('novels/' + args.bookId + '/chapters/' + n + '.md', { cwd: base });
         const info = await fs.stat(t);
@@ -214,10 +225,12 @@ return {
     }));
 
     harness.handle('list_chapters', async function (args) {
-      const state = await readState(args.bookId);
+      const base = lastBase || fallbackRoot;
+      const state = await readState(args.bookId, base);
       return state ? state.chapters.map(function (c) { return { index: c.index, title: c.title, wordCount: c.wordCount, score: c.aiTasteScore }; }) : [];
     });
     harness.handle('read_chapter', async function (args) {
+      const base = lastBase || fallbackRoot;
       const n = String(args.index).padStart(3, '0');
       const t = await fs.resolve('novels/' + args.bookId + '/chapters/' + n + '.md', { cwd: base });
       const info = await fs.stat(t);
