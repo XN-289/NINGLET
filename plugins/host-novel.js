@@ -211,9 +211,47 @@ return {
         const index = state.book.nextChapterIndex;
         const targetWords = args.words || state.book.chapterWords;
 
+        // === 苏格拉底规划（give me）：未给 context 时先追问本章意图 ===
+        let intent = args.context || '';
+        if (!intent) {
+          const uq = ctx.get('userQuestions');
+          if (uq) {
+            try {
+              const ans = await uq.ask({
+                questions: [
+                  { id: 'core', question: '这一章最想推进什么？', header: '先定本章意图', options: [
+                    { label: '冲突/战斗升级' }, { label: '情感/关系推进' }, { label: '揭示真相/反转' }, { label: '铺垫伏笔/世界观' },
+                  ] },
+                  { id: 'protagonist', question: '主角这一章的状态？', options: [
+                    { label: '主动出击' }, { label: '被动应对' }, { label: '内心挣扎/成长' },
+                  ] },
+                  { id: 'ending', question: '结尾想留什么钩子？', options: [
+                    { label: '危机突降' }, { label: '悬念反转' }, { label: '挑衅叫板' }, { label: '留白' },
+                  ] },
+                ],
+                agent: exec.agent,
+                signal: exec.signal,
+              });
+              const pick = function (id) {
+                const a = (ans && ans.answers || []).filter(function (x) { return x.id === id; })[0];
+                return a ? ((a.selected && a.selected[0]) || a.custom || '') : '';
+              };
+              intent = '核心推进：' + (pick('core') || '未指定') + '；主角状态：' + (pick('protagonist') || '未指定') + '；结尾钩子：' + (pick('ending') || '未指定');
+            } catch (e) {
+              intent = '';
+            }
+          }
+        }
+
+        // 保存本章意图（输入治理）
+        if (intent) {
+          const it = await fs.resolve('novels/' + args.bookId + '/story/runtime/chapter-' + String(index).padStart(3, '0') + '.intent.md', { cwd: base });
+          await fs.writeText(it, '# 第 ' + index + ' 章意图\n\n' + intent, undefined, undefined, lastPolicy);
+        }
+
         const recent = state.summaries.slice(-5).map(function (s) { return s.text; }).join('\n');
         const writerPrompt = '你是小说写手。写第 ' + index + ' 章正文，目标约 ' + targetWords + ' 字。\n'
-          + '本章指导：' + (args.context || '（无）') + '\n'
+          + '本章意图：' + (intent || '（无，自由发挥）') + '\n'
           + '前文摘要：\n' + (recent || '（无，此为第一章）') + '\n'
           + '写作规则：\n' + rewriteRules() + '\n只输出正文，不要标题、不要解释。';
 
