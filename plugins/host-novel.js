@@ -115,6 +115,7 @@ return {
       if (!Array.isArray(s.summaries)) errors.push('summaries 必须为数组');
       if (!Array.isArray(s.hooks)) errors.push('hooks 必须为数组');
       if (s.outline !== undefined && !Array.isArray(s.outline)) errors.push('outline 必须为数组');
+      if (s.characters !== undefined && !Array.isArray(s.characters)) errors.push('characters 必须为数组');
       return { ok: errors.length === 0, errors: errors };
     }
 
@@ -210,7 +211,7 @@ return {
         }
         const state = {
           book: { bookId: bookId, title: title, genre: args.genre || '', brief: args.brief || '', targetChapters: 50, chapterWords: 2000, nextChapterIndex: 1 },
-          chapters: [], summaries: [], hooks: [], outline: outline,
+          chapters: [], summaries: [], hooks: [], characters: [], outline: outline,
         };
         await writeState(bookId, state, base);
         return '已创建书《' + title + '》bookId=' + bookId + '，状态写入 novels/' + bookId + '/story/state/state.json' + (outline.length ? '（已生成 ' + outline.length + ' 章大纲）' : '');
@@ -285,6 +286,31 @@ return {
           if (rew) { body = rew; ai = detectAI(body); revised = true; }
         }
 
+        // 观察者：抽取角色/伏笔 + 生成结构化摘要（记忆治理）
+        let summary = body.slice(0, 200);
+        const newChars = [];
+        const newHooks = [];
+        try {
+          const observerPrompt = '你是小说观察者。读完下面这章，只输出一个 JSON 对象（不要任何其他文字）：\n'
+            + '{"summary":"本章摘要（80字内，事件+结果）","characters":[{"name":"角色名","role":"主角/配角/反派","desc":"一句话定位"}],"hooks":[{"name":"伏笔/悬念","status":"open","note":"一句话"}]}\n'
+            + 'status 取值：open=刚埋下 / progressing=推进中 / resolved=已回收。\n\n章节正文：\n' + body;
+          const obsText = await callModel(observerPrompt, '你是小说观察者，只输出 JSON。');
+          if (obsText) {
+            const m = obsText.match(/\{[\s\S]*\}/);
+            const obs = m ? JSON.parse(m[0]) : null;
+            if (obs) {
+              if (typeof obs.summary === 'string' && obs.summary.trim()) summary = obs.summary.trim();
+              if (Array.isArray(obs.characters)) for (const c of obs.characters) if (c && c.name) newChars.push({ name: String(c.name), role: String(c.role || ''), desc: String(c.desc || '') });
+              if (Array.isArray(obs.hooks)) for (const h of obs.hooks) if (h && h.name) newHooks.push({ name: String(h.name), status: (h.status === 'progressing' || h.status === 'resolved') ? h.status : 'open', note: String(h.note || '') });
+            }
+          }
+        } catch (e) { /* 观察者失败则回退截断摘要 */ }
+
+        const chars = (state.characters || []).slice();
+        for (const nc of newChars) { if (!chars.some(function (c) { return c.name === nc.name; })) chars.push(nc); }
+        const hooks = (state.hooks || []).slice();
+        for (const nh of newHooks) { const ex = hooks.filter(function (h) { return h.name === nh.name; })[0]; if (ex) ex.status = nh.status; else hooks.push(nh); }
+
         const path = await writeChapter(args.bookId, index, body, base);
         const chapter = {
           index: index, title: '第' + index + '章', wordCount: countWords(body), filePath: path,
@@ -293,8 +319,9 @@ return {
         const next = {
           book: Object.assign({}, state.book, { nextChapterIndex: Math.max(state.book.nextChapterIndex, index + 1) }),
           chapters: state.chapters.concat([chapter]).sort(function (a, b) { return a.index - b.index; }),
-          summaries: state.summaries.concat([{ index: index, text: body.slice(0, 200) }]),
-          hooks: state.hooks,
+          summaries: state.summaries.concat([{ index: index, text: summary }]),
+          hooks: hooks,
+          characters: chars,
           outline: state.outline || [],
         };
         await writeState(args.bookId, next, base);
@@ -354,6 +381,17 @@ return {
       const base = lastBase || fallbackRoot;
       const state = await readState(args.bookId, base);
       return state && state.outline ? state.outline : [];
+    });
+    harness.handle('get_structure', async function (args) {
+      const base = lastBase || fallbackRoot;
+      const state = await readState(args.bookId, base);
+      if (!state) return { outline: [], chapters: [], characters: [], hooks: [] };
+      return {
+        outline: state.outline || [],
+        chapters: state.chapters.map(function (c) { return { index: c.index, title: c.title, wordCount: c.wordCount, score: c.aiTasteScore }; }),
+        characters: state.characters || [],
+        hooks: state.hooks || [],
+      };
     });
     harness.handle('read_chapter', async function (args) {
       const base = lastBase || fallbackRoot;

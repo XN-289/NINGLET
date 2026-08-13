@@ -38,5 +38,6 @@ export function validateState(s) {
   if (!Array.isArray(s.summaries)) fail(errors, 'summaries 必须为数组');
   if (!Array.isArray(s.hooks)) fail(errors, 'hooks 必须为数组');
   if (s.outline !== undefined && !Array.isArray(s.outline)) fail(errors, 'outline 必须为数组');
+  if (s.characters !== undefined && !Array.isArray(s.characters)) fail(errors, 'characters 必须为数组');
   return { ok: errors.length === 0, errors };
 }
