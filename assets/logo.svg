@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="NINGLET">
+  <rect width="128" height="128" rx="10" fill="#F4F2EC"/>
+  <!-- 笔尖 -->
+  <path d="M38 30 H90 L64 78 Z" fill="#2A2A28"/>
+  <!-- 中缝 -->
+  <path d="M63 30 V54" stroke="#F4F2EC" stroke-width="3"/>
+  <!-- 气孔 -->
+  <circle cx="64" cy="59" r="3.5" fill="#F4F2EC"/>
+  <!-- 墨点 -->
+  <circle cx="64" cy="94" r="5" fill="#C8161D"/>
+</svg>
