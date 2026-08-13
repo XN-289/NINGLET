@@ -37,5 +37,6 @@ export function validateState(s) {
   else for (const c of s.chapters) { const r = validateChapter(c); if (!r.ok) errors.push(...r.errors.map((e) => `chapters[${c.index}].` + e)); }
   if (!Array.isArray(s.summaries)) fail(errors, 'summaries 必须为数组');
   if (!Array.isArray(s.hooks)) fail(errors, 'hooks 必须为数组');
+  if (s.outline !== undefined && !Array.isArray(s.outline)) fail(errors, 'outline 必须为数组');
   return { ok: errors.length === 0, errors };
 }

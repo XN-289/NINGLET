@@ -114,6 +114,7 @@ return {
       else for (const c of s.chapters) { const r = validateChapter(c); if (!r.ok) for (const e of r.errors) errors.push('chapters[' + c.index + '].' + e); }
       if (!Array.isArray(s.summaries)) errors.push('summaries 必须为数组');
       if (!Array.isArray(s.hooks)) errors.push('hooks 必须为数组');
+      if (s.outline !== undefined && !Array.isArray(s.outline)) errors.push('outline 必须为数组');
       return { ok: errors.length === 0, errors: errors };
     }
 
@@ -189,12 +190,30 @@ return {
         const bookId = makeBookId(title);
         const existing = await readState(bookId, base);
         if (existing) return '书已存在：' + bookId + '（不覆盖）';
+        // 有创作简报时生成章回大纲
+        let outline = [];
+        if (args.brief) {
+          try {
+            const op = '你是小说架构师。根据创作简报生成章回大纲：每行「第N章：标题 —— 一句话摘要」，共 8-12 章。只输出大纲，不要解释。\n\n创作简报：\n' + args.brief;
+            const ot = await callModel(op, '你是小说架构师。');
+            if (ot) {
+              outline = ot.split('\n').map(function (line) {
+                const m = line.match(/第\s*(\d+)\s*章\s*[：:]\s*(.+)/);
+                if (m) return { index: parseInt(m[1], 10) || 0, title: (m[2] || '').trim() };
+                const t = line.trim();
+                return t ? { index: 0, title: t } : null;
+              }).filter(function (o) { return o && o.title; });
+            }
+          } catch (e) {
+            outline = [];
+          }
+        }
         const state = {
           book: { bookId: bookId, title: title, genre: args.genre || '', brief: args.brief || '', targetChapters: 50, chapterWords: 2000, nextChapterIndex: 1 },
-          chapters: [], summaries: [], hooks: [],
+          chapters: [], summaries: [], hooks: [], outline: outline,
         };
         await writeState(bookId, state, base);
-        return '已创建书《' + title + '》bookId=' + bookId + '，状态写入 novels/' + bookId + '/story/state/state.json';
+        return '已创建书《' + title + '》bookId=' + bookId + '，状态写入 novels/' + bookId + '/story/state/state.json' + (outline.length ? '（已生成 ' + outline.length + ' 章大纲）' : '');
       },
     }));
 
@@ -276,6 +295,7 @@ return {
           chapters: state.chapters.concat([chapter]).sort(function (a, b) { return a.index - b.index; }),
           summaries: state.summaries.concat([{ index: index, text: body.slice(0, 200) }]),
           hooks: state.hooks,
+          outline: state.outline || [],
         };
         await writeState(args.bookId, next, base);
         return '第 ' + index + ' 章完成：字数 ' + chapter.wordCount + '，AI味评分 ' + ai.score + (revised ? '（已自动修订）' : '') + '，落盘 ' + path;
@@ -329,6 +349,11 @@ return {
       const base = lastBase || fallbackRoot;
       const state = await readState(args.bookId, base);
       return state ? state.chapters.map(function (c) { return { index: c.index, title: c.title, wordCount: c.wordCount, score: c.aiTasteScore }; }) : [];
+    });
+    harness.handle('list_outline', async function (args) {
+      const base = lastBase || fallbackRoot;
+      const state = await readState(args.bookId, base);
+      return state && state.outline ? state.outline : [];
     });
     harness.handle('read_chapter', async function (args) {
       const base = lastBase || fallbackRoot;
