@@ -3,64 +3,79 @@ return {
     const slots = ctx.get('slots');
     if (slots === undefined) return;
 
+    // 安静编辑部设计系统（docs/design-system.md）：发丝线、衬线正文、去投影、克制配色
+    styles.insert(`
+      .ninglet-fab { position: fixed; right: 20px; bottom: 20px; z-index: 9999; pointer-events: auto; cursor: pointer; font-size: 13px; padding: 8px 16px; border: 1px solid var(--border); border-radius: 2px; background: var(--background); color: var(--foreground); transition: opacity 0.6s; }
+      .ninglet-fab:hover { opacity: 0.8; }
+      .ninglet-panel { position: fixed; right: 20px; bottom: 64px; z-index: 9999; pointer-events: auto; width: 400px; max-height: 70vh; overflow: auto; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: 2px; animation: ninglet-fade 0.6s ease; }
+      @keyframes ninglet-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+      .ninglet-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+      .ninglet-panel-body { padding: 8px 16px 16px; }
+      .ninglet-book { padding: 10px 0; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
+      .ninglet-book:hover { opacity: 0.8; }
+      .ninglet-chapter { padding: 9px 0; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); color: var(--muted-foreground, #7C7B76); transition: color 0.3s; }
+      .ninglet-chapter:hover { color: var(--foreground); }
+      .ninglet-empty { color: var(--muted-foreground, #7C7B76); font-size: 13px; padding: 16px 0; }
+      .ninglet-prose { margin-top: 16px; font-family: Georgia, 'Noto Serif SC', 'Songti SC', serif; font-size: 15px; line-height: 1.9; white-space: pre-wrap; }
+      .ninglet-close { cursor: pointer; background: none; border: none; color: var(--muted-foreground, #7C7B76); font-size: 15px; }
+    `);
+
     function NovelPanel() {
       const [open, setOpen] = React.useState(false);
       const [books, setBooks] = React.useState([]);
       const [chapters, setChapters] = React.useState([]);
       const [bookId, setBookId] = React.useState(null);
       const [body, setBody] = React.useState('');
+      const [error, setError] = React.useState('');
 
       function refreshBooks() {
-        host.call('list_books', {}).then(function (rows) { setBooks(rows || []); });
+        setError('');
+        host.call('list_books', {}).then(function (rows) { setBooks(rows || []); }).catch(function () { setError('连接失败'); });
       }
       function openBook(id) {
         setBookId(id);
         setBody('');
-        host.call('list_chapters', { bookId: id }).then(function (rows) { setChapters(rows || []); });
+        setError('');
+        host.call('list_chapters', { bookId: id }).then(function (rows) { setChapters(rows || []); }).catch(function () { setError('连接失败'); });
       }
       function readChapter(idx) {
-        host.call('read_chapter', { bookId: bookId, index: idx }).then(function (t) { setBody(t || ''); });
+        setError('');
+        host.call('read_chapter', { bookId: bookId, index: idx }).then(function (t) { setBody(t || ''); }).catch(function () { setError('连接失败'); });
       }
 
-      const btn = React.createElement('button', {
+      const fab = React.createElement('button', {
+        className: 'ninglet-fab',
         onClick: function () { const next = !open; setOpen(next); if (next) refreshBooks(); },
-        style: { position: 'fixed', right: 16, bottom: 16, zIndex: 9999, cursor: 'pointer', pointerEvents: 'auto' },
       }, '章节');
 
-      const panel = open ? React.createElement('div', {
-        style: {
-          position: 'fixed', right: 16, bottom: 56, width: 380, maxHeight: '70vh',
-          background: 'var(--background, #fff)', color: 'var(--foreground, #111)',
-          border: '1px solid var(--border, #ccc)', borderRadius: 12, padding: 16,
-          overflow: 'auto', zIndex: 9999, pointerEvents: 'auto', boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
-        },
-      }, [
-        React.createElement('div', { key: 'head', style: { display: 'flex', justifyContent: 'space-between', marginBottom: 10 } }, [
-          React.createElement('b', { key: 't' }, '章节'),
-          React.createElement('button', { key: 'x', onClick: function () { setOpen(false); }, style: { cursor: 'pointer' } }, '×'),
+      const panel = open ? React.createElement('div', { className: 'ninglet-panel' }, [
+        React.createElement('div', { key: 'head', className: 'ninglet-panel-head' }, [
+          React.createElement('span', { key: 't' }, '章节'),
+          React.createElement('button', { key: 'x', className: 'ninglet-close', onClick: function () { setOpen(false); } }, '×'),
         ]),
-        books.length === 0
-          ? React.createElement('div', { key: 'empty', style: { color: 'var(--muted-foreground, #888)' } }, '尚无书籍')
-          : React.createElement('div', { key: 'books', style: { marginBottom: 8 } },
-              books.map(function (b) {
-                return React.createElement('div', {
-                  key: b.bookId,
-                  onClick: function () { openBook(b.bookId); },
-                  style: { cursor: 'pointer', padding: '4px 0', fontWeight: bookId === b.bookId ? 'bold' : 'normal' },
-                }, b.title);
-              })),
-        React.createElement('div', { key: 'chapters', style: { marginTop: 8 } },
+        React.createElement('div', { key: 'b', className: 'ninglet-panel-body' }, [
+          error ? React.createElement('div', { key: 'err', className: 'ninglet-empty' }, error) : null,
+          books.length === 0 && !error ? React.createElement('div', { key: 'empty', className: 'ninglet-empty' }, '尚无书籍') : null,
+          books.map(function (b) {
+            return React.createElement('div', {
+              key: b.bookId,
+              className: 'ninglet-book',
+              onClick: function () { openBook(b.bookId); },
+              style: { fontWeight: bookId === b.bookId ? 'bold' : 'normal' },
+            }, b.title);
+          }),
           chapters.map(function (c) {
             return React.createElement('div', {
               key: c.index,
+              className: 'ninglet-chapter',
               onClick: function () { readChapter(c.index); },
-              style: { cursor: 'pointer', padding: '5px 0', borderBottom: '1px solid var(--border, #eee)' },
             }, '第' + c.index + '章 · ' + c.wordCount + '字 · AI味' + c.score);
-          })),
-        body ? React.createElement('pre', { key: 'body', style: { whiteSpace: 'pre-wrap', marginTop: 12, fontFamily: 'serif', maxHeight: 300, overflow: 'auto', background: 'var(--muted, rgba(0,0,0,0.04))', padding: 8, borderRadius: 6 } }, body) : null,
+          }),
+          body ? React.createElement('div', { key: 'prose', className: 'ninglet-prose' }, body) : null,
+        ]),
       ]) : null;
 
-      return React.createElement('div', { key: 'novel-panel-root' }, btn, panel);
+      return React.createElement('div', null, fab, panel);
     }
 
     slots.inject('shell.overlay', () => slots.register(

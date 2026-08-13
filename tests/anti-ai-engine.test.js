@@ -35,3 +35,20 @@ test('rewriteRules 包含禁用词表', () => {
   const rules = rewriteRules();
   assert.ok(rules.includes('心中一凛'));
 });
+
+test('detectAI hits 含 severity 字段', () => {
+  const { hits } = detectAI('他心中一凛。');
+  assert.ok(hits.length > 0);
+  assert.equal(hits[0].severity, 3);
+});
+
+test('detectAI rules 覆盖阈值', () => {
+  const r = detectAI('他的眼神里透着冷的、硬的光。', { deThreshold: 1 });
+  assert.ok(!r.hits.some((h) => h.rule === 'de-density'));
+});
+
+test('rewriteRules 含完整约束', () => {
+  const rules = rewriteRules();
+  assert.ok(rules.includes('一段不超过 3 个'));
+  assert.ok(rules.includes('长短交替'));
+});

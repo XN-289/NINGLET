@@ -1,6 +1,7 @@
 return {
   inject: ['llm', 'fs'],
   apply(ctx) {
+    // ============ 内联自 src/book-id.js ============
     function slugify(title) {
       return String(title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     }
@@ -16,6 +17,7 @@ return {
     function isValidBookId(id) {
       return typeof id === 'string' && /^[a-z0-9][a-z0-9_-]{0,63}$/.test(id) && !id.includes('..');
     }
+    // ============ 内联自 src/word-count.js ============
     const CJK = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]/;
     function detectLanguage(text) {
       const cjk = (text.match(new RegExp(CJK.source, 'g')) || []).length;
@@ -27,6 +29,7 @@ return {
       const t = text.trim();
       return t.length === 0 ? 0 : t.split(/\s+/).length;
     }
+    // ============ 内联自 src/anti-ai-engine.js ============
     const DEFAULT_FORBIDDEN = ['心中一凛', '不由自主', '眼中闪过一丝', '嘴角勾起', '嘴角微微上扬', '淡淡道', '轻声道', '沉吟', '半晌', '不禁', '心头一颤', '意味深长', '复杂难明', '难以言表', '五味杂陈', '百感交集'];
     function scanForbidden(text, forbidden) {
       const words = forbidden || DEFAULT_FORBIDDEN;
@@ -51,28 +54,66 @@ return {
       const m = xs.reduce((a, b) => a + b, 0) / xs.length;
       return xs.reduce((a, b) => a + (b - m) * (b - m), 0) / xs.length;
     }
-    function detectAI(text) {
+    function detectAI(text, rules) {
+      const opts = Object.assign({ deThreshold: 0.05, varThreshold: 20, forbidden: DEFAULT_FORBIDDEN }, rules || {});
       let score = 100;
       const hits = [];
-      for (const h of scanForbidden(text)) { score -= 3 * h.count; hits.push({ rule: 'forbidden', detail: h.word + ' x' + h.count }); }
+      const forb = scanForbidden(text, opts.forbidden);
+      for (const h of forb) {
+        score -= 3 * h.count;
+        hits.push({ rule: 'forbidden', detail: h.word + ' x' + h.count, severity: 3 });
+      }
       const dd = deDensity(text);
-      if (dd > 0.05) { score -= 10; hits.push({ rule: 'de-density', detail: '的密度 ' + dd.toFixed(3) }); }
+      if (dd > opts.deThreshold) {
+        score -= 10;
+        hits.push({ rule: 'de-density', detail: '的密度 ' + dd.toFixed(3) + ' > ' + opts.deThreshold, severity: 10 });
+      }
       const lens = sentenceLengths(text);
       const v = variance(lens);
-      if (lens.length >= 3 && v < 20) { score -= 10; hits.push({ rule: 'sentence-uniformity', detail: '句长方差 ' + v.toFixed(1) }); }
+      if (lens.length >= 3 && v < opts.varThreshold) {
+        score -= 10;
+        hits.push({ rule: 'sentence-uniformity', detail: '句长方差 ' + v.toFixed(1) + ' < ' + opts.varThreshold, severity: 10 });
+      }
       return { score: Math.max(0, Math.min(100, score)), hits: hits };
     }
-    function rewriteRulesText() {
-      return '禁用词（出现即改写）：' + DEFAULT_FORBIDDEN.join('、') + '。避免"的"字密度过高；避免句长均匀；避免排比三连与段尾抒情；用动作代替"淡淡道/轻声道"。';
+    function rewriteRules() {
+      return '禁用词（出现即视为 AI 味，直接改写）：' + DEFAULT_FORBIDDEN.join('、') + '。'
+        + '避免"的"字密度过高（一段不超过 3 个）；避免句长均匀的流水句（长短交替）；'
+        + '避免排比三连与段尾抒情总结；用动作代替"淡淡道/轻声道"式对话标签。';
+    }
+    // ============ 内联自 src/state-schema.js ============
+    const CHAPTER_STATUSES = ['draft', 'revised', 'approved'];
+    function isInt(n) { return Number.isInteger(n); }
+    function isStr(s) { return typeof s === 'string'; }
+    function validateBook(b) {
+      const errors = [];
+      if (!b || typeof b !== 'object') return { ok: false, errors: ['book is not an object'] };
+      if (!isStr(b.bookId) || !isValidBookId(b.bookId)) errors.push('bookId 非法');
+      if (!isStr(b.title) || b.title.length === 0) errors.push('title 缺失');
+      if (!isInt(b.targetChapters) || b.targetChapters < 1) errors.push('targetChapters 必须为正整数');
+      if (!isInt(b.chapterWords) || b.chapterWords < 1) errors.push('chapterWords 必须为正整数');
+      if (!isInt(b.nextChapterIndex) || b.nextChapterIndex < 1) errors.push('nextChapterIndex 必须为正整数');
+      return { ok: errors.length === 0, errors: errors };
+    }
+    function validateChapter(c) {
+      const errors = [];
+      if (!c || typeof c !== 'object') return { ok: false, errors: ['chapter is not an object'] };
+      if (!isInt(c.index) || c.index < 1) errors.push('index 必须为正整数');
+      if (!isStr(c.filePath) || c.filePath.length === 0) errors.push('filePath 缺失');
+      if (!isInt(c.wordCount) || c.wordCount < 0) errors.push('wordCount 必须为非负整数');
+      if (typeof c.aiTasteScore !== 'number' || c.aiTasteScore < 0 || c.aiTasteScore > 100) errors.push('aiTasteScore 必须在 [0,100]');
+      if (CHAPTER_STATUSES.indexOf(c.status) === -1) errors.push('status 必须是 ' + CHAPTER_STATUSES.join('/'));
+      return { ok: errors.length === 0, errors: errors };
     }
     function validateState(s) {
       const errors = [];
-      const b = s && s.book;
-      if (!b || !isValidBookId(b.bookId)) errors.push('bookId 非法');
-      if (typeof b === 'undefined' || typeof b.nextChapterIndex !== 'number' || !Number.isInteger(b.nextChapterIndex)) errors.push('nextChapterIndex 非整数');
-      if (!Array.isArray(s.chapters)) errors.push('chapters 非数组');
-      if (!Array.isArray(s.summaries)) errors.push('summaries 非数组');
-      if (!Array.isArray(s.hooks)) errors.push('hooks 非数组');
+      if (!s || typeof s !== 'object') return { ok: false, errors: ['state is not an object'] };
+      const book = validateBook(s.book);
+      if (!book.ok) for (const e of book.errors) errors.push('book.' + e);
+      if (!Array.isArray(s.chapters)) errors.push('chapters 必须为数组');
+      else for (const c of s.chapters) { const r = validateChapter(c); if (!r.ok) for (const e of r.errors) errors.push('chapters[' + c.index + '].' + e); }
+      if (!Array.isArray(s.summaries)) errors.push('summaries 必须为数组');
+      if (!Array.isArray(s.hooks)) errors.push('hooks 必须为数组');
       return { ok: errors.length === 0, errors: errors };
     }
 
@@ -83,7 +124,6 @@ return {
     let lastBase = null;
     let lastPolicy = null;
 
-    // 工具执行时从 exec.agent.session 取会话工作区 + 解析沙箱策略；RPC 处理器回退用缓存值。
     function baseFor(exec) {
       const session = (exec && exec.agent) ? exec.agent.session : undefined;
       const b = session ? session.header.cwd : fallbackRoot;
@@ -111,13 +151,17 @@ return {
     }
 
     async function readState(bookId, base) {
+      if (!isValidBookId(bookId)) throw new Error('unsafe bookId');
       const t = await fs.resolve('novels/' + bookId + '/story/state/state.json', { cwd: base });
       const info = await fs.stat(t);
       if (info === undefined) return null;
-      return JSON.parse(await fs.readText(t));
+      let raw;
+      try { raw = await fs.readText(t); } catch (e) { throw new Error('读取状态失败：' + e.message); }
+      try { return JSON.parse(raw); } catch (e) { throw new Error('状态文件损坏（非合法 JSON），请修复 novels/' + bookId + '/story/state/state.json'); }
     }
 
     async function writeState(bookId, state, base) {
+      if (!isValidBookId(bookId)) throw new Error('unsafe bookId');
       const v = validateState(state);
       if (!v.ok) throw new Error('状态非法，拒绝写入：' + v.errors.join('; '));
       const t = await fs.resolve('novels/' + bookId + '/story/state/state.json', { cwd: base });
@@ -125,6 +169,7 @@ return {
     }
 
     async function writeChapter(bookId, index, body, base) {
+      if (!isValidBookId(bookId)) throw new Error('unsafe bookId');
       const n = String(index).padStart(3, '0');
       const t = await fs.resolve('novels/' + bookId + '/chapters/' + n + '.md', { cwd: base });
       await fs.writeText(t, body, undefined, undefined, lastPolicy);
@@ -138,15 +183,18 @@ return {
       output: { schema: { type: 'string' }, render: function (_a, v) { return [{ type: 'text', text: v }]; } },
       execute: async function (args, exec) {
         const base = baseFor(exec);
-        const bookId = makeBookId(args.title);
+        const title = String(args.title || '').trim();
+        if (!title) throw new Error('title 不能为空');
+        if (title.length > 50) throw new Error('title 过长（≤50 字）');
+        const bookId = makeBookId(title);
         const existing = await readState(bookId, base);
         if (existing) return '书已存在：' + bookId + '（不覆盖）';
         const state = {
-          book: { bookId: bookId, title: args.title, genre: args.genre || '', targetChapters: 50, chapterWords: 2000, nextChapterIndex: 1 },
+          book: { bookId: bookId, title: title, genre: args.genre || '', brief: args.brief || '', targetChapters: 50, chapterWords: 2000, nextChapterIndex: 1 },
           chapters: [], summaries: [], hooks: [],
         };
         await writeState(bookId, state, base);
-        return '已创建书《' + args.title + '》bookId=' + bookId + '，状态写入 novels/' + bookId + '/story/state/state.json';
+        return '已创建书《' + title + '》bookId=' + bookId + '，状态写入 novels/' + bookId + '/story/state/state.json';
       },
     }));
 
@@ -167,7 +215,7 @@ return {
         const writerPrompt = '你是小说写手。写第 ' + index + ' 章正文，目标约 ' + targetWords + ' 字。\n'
           + '本章指导：' + (args.context || '（无）') + '\n'
           + '前文摘要：\n' + (recent || '（无，此为第一章）') + '\n'
-          + '写作规则：\n' + rewriteRulesText() + '\n只输出正文，不要标题、不要解释。';
+          + '写作规则：\n' + rewriteRules() + '\n只输出正文，不要标题、不要解释。';
 
         let body = await callModel(writerPrompt, '你是专业小说写手。');
         if (!body) throw new Error('模型返回空正文');
@@ -175,7 +223,7 @@ return {
         let ai = detectAI(body);
         let revised = false;
         if (ai.hits.length > 0) {
-          const revisePrompt = '以下是正文，请按规则改写去除 AI 味，只输出改写后的正文：\n' + rewriteRulesText() + '\n\n' + body;
+          const revisePrompt = '以下是正文，请按规则改写去除 AI 味，只输出改写后的正文：\n' + rewriteRules() + '\n\n' + body;
           const rew = await callModel(revisePrompt, '你是小说修订者，按规则改写去除 AI 味。');
           if (rew) { body = rew; ai = detectAI(body); revised = true; }
         }
@@ -186,7 +234,7 @@ return {
           aiTasteScore: ai.score, status: ai.hits.length === 0 ? 'approved' : 'revised',
         };
         const next = {
-          book: Object.assign({}, state.book, { nextChapterIndex: index + 1 }),
+          book: Object.assign({}, state.book, { nextChapterIndex: Math.max(state.book.nextChapterIndex, index + 1) }),
           chapters: state.chapters.concat([chapter]).sort(function (a, b) { return a.index - b.index; }),
           summaries: state.summaries.concat([{ index: index, text: body.slice(0, 200) }]),
           hooks: state.hooks,
@@ -216,6 +264,7 @@ return {
       output: { schema: { type: 'string' }, render: function (_a, v) { return [{ type: 'text', text: v }]; } },
       execute: async function (args, exec) {
         const base = baseFor(exec);
+        if (!Number.isInteger(args.index) || args.index < 1) return '章节号非法';
         const n = String(args.index).padStart(3, '0');
         const t = await fs.resolve('novels/' + args.bookId + '/chapters/' + n + '.md', { cwd: base });
         const info = await fs.stat(t);
@@ -245,6 +294,7 @@ return {
     });
     harness.handle('read_chapter', async function (args) {
       const base = lastBase || fallbackRoot;
+      if (!Number.isInteger(args.index) || args.index < 1) return '';
       const n = String(args.index).padStart(3, '0');
       const t = await fs.resolve('novels/' + args.bookId + '/chapters/' + n + '.md', { cwd: base });
       const info = await fs.stat(t);

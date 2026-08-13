@@ -25,3 +25,14 @@ test('validateState 要求 chapters 为数组、nextChapterIndex 为整数', () 
   assert.equal(validateState({ book: { bookId: 'b', title: 'x', targetChapters: 5, chapterWords: 100, nextChapterIndex: 2 }, chapters: [], summaries: [], hooks: [] }).ok, true);
   assert.equal(validateState({ book: { bookId: 'b' }, chapters: 'nope' }).ok, false);
 });
+
+test('validateState null/undefined/{book:null} 不抛错', () => {
+  assert.equal(validateState(null).ok, false);
+  assert.equal(validateState(undefined).ok, false);
+  assert.equal(validateState({ book: null, chapters: [], summaries: [], hooks: [] }).ok, false);
+});
+
+test('validateBook 拒绝 nextChapterIndex < 1', () => {
+  assert.equal(validateBook({ bookId: 'a-book', title: 'x', targetChapters: 5, chapterWords: 100, nextChapterIndex: 0 }).ok, false);
+  assert.equal(validateBook({ bookId: 'a-book', title: 'x', targetChapters: 5, chapterWords: 100, nextChapterIndex: 1.5 }).ok, false);
+});
