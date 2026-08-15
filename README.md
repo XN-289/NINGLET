@@ -39,7 +39,7 @@ NINGLET 是 DeepSeek Harness 生态里的一个**小说创作插件**。它不�
 克隆本仓库，两步装进你的 DeepSeek Harness：
 
 ```bash
-git clone https://github.com/XN-289/NINGLET.git
+git clone https://github.com/XN-289/dsh-NINGLET-novel-Agent.git
 ```
 
 **1. 技能（5 个 SKILL.md）** —— 复制到用户技能根，或当前项目的 `.dsh/skills/`（DSH 会自动发现两者）：
