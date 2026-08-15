@@ -6,9 +6,11 @@
 
 **让 AI 写小说，但读者闻不出 AI 味。**
 
-跑在 DeepSeek Harness 上的小说创作插件 —— 专门写小说，也专门把「AI 味」挡在正文之外。
+跑在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 上的小说创作插件 —— 专门写小说，也专门把「AI 味」挡在正文之外。
 
-[是什么](#是什么) · [特性](#特性) · [快速开始](#快速开始) · [技能](#技能) · [架构](#架构) · [项目结构](#项目结构) · [借鉴与致谢](#借鉴与致谢)
+[是什么](#是什么) · [安装](#安装) · [特性](#特性) · [技能](#技能) · [架构](#架构) · [项目结构](#项目结构) · [借鉴与致谢](#借鉴与致谢)
+
+<sub>DSH Plugin · 属于 [dsh-plugin](https://github.com/topics/dsh-plugin) 生态</sub>
 
 </div>
 
@@ -32,21 +34,37 @@ NINGLET 是 DeepSeek Harness 生态里的一个**小说创作插件**。它不�
 - **结构化状态**：每本书的状态是校验后的 JSON（`story/state/state.json`），正文是 Markdown（`chapters/NNN.md`）；坏数据拒绝写入，不滚雪球。
 - **安静编辑部 UI**：写作优先的界面（见 `docs/design-system.md`），连 UI 都去 AI 味——无渐变、无 emoji 图标、无投影堆砌。
 
+## 安装
+
+克隆本仓库，两步装进你的 DeepSeek Harness：
+
+```bash
+git clone https://github.com/XN-289/NINGLET.git
+```
+
+**1. 技能（5 个 SKILL.md）** —— 复制到用户技能根，或当前项目的 `.dsh/skills/`（DSH 会自动发现两者）：
+
+```bash
+# Unix
+cp -r NINGLET/skills/* ~/.dsh/skills/
+# Windows (PowerShell)
+Copy-Item -Recurse NINGLET\skills\* $HOME\.dsh\skills\
+```
+
+**2. 工具 + 章节面板** —— 自包含动态插件，不依赖任何 workspace 包。在 DSH 会话里用 `cordis_define` 定义（`plugins/host-novel.js` 作为 `code.host`，`plugins/client-novel-ui.js` 作为 `code.client`），再 `cordis_run` 激活。
+
+> `harness-packages/` 下的 `@deepseek-ai/dsh-tool-ninglet` / `dsh-prompt-ninglet` 是固化进 DSH 核心仓库源码树的形态，面向核心开发者；普通用户走上面的动态插件路径即可。
+
 ## 快速开始
 
 ```bash
-# 1. 纯函数核心单测
-node --test          # 34 个测试，全绿
-
-# 2. 在 DeepSeek Harness 里加载（当前用动态插件，正式固化见 harness-packages/）
-#    - Host 工具：plugins/host-novel.js 作为 code.host
-#    - Client 面板：plugins/client-novel-ui.js 作为 code.client
-#    通过 cordis_define / cordis_run 定义并激活
-
-# 3. 在对话里说
-#    「创建一本都市修仙小说《吞天魔帝》」
-#    「写下一章，重点写师徒矛盾」
+node --test   # 纯函数核心单测：34 个，全绿
 ```
+
+在装好技能与插件的 DSH 会话里说：
+
+> 「创建一本都市修仙小说《吞天魔帝》」
+> 「写下一章，重点写师徒矛盾」
 
 状态落盘在**会话工作区**的 `novels/<bookId>/` 下：`story/state/state.json`（权威状态）+ `chapters/NNN.md`（正文）。
 
