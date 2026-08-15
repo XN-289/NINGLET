@@ -12,6 +12,8 @@
 
 <sub>DSH Plugin · 属于 [dsh-plugin](https://github.com/topics/dsh-plugin) 生态</sub>
 
+**安装**：克隆本仓库，把 `skills/` 下 5 个技能复制到 `~/.dsh/skills/`，再以动态插件加载 `plugins/host-novel.js`（Host 工具）+ `plugins/client-novel-ui.js`（章节面板）——详见[安装](#安装)。
+
 </div>
 
 ---
