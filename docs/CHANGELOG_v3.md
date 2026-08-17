@@ -1,3 +1,5 @@
+> ⚠️ **遗留文档（Legacy）**：本文件记录的是前身项目 **kealin AI Novels**（独立 Python/Flask 应用）的 v3.0.0 修复，与 NINGLET（DSH 插件）不是同一项目。保留作反 AI 味引擎移植蓝本参考。
+
 # Changelog — v3.0.0 全面修复
 
 ## 修复日期：2026年7月10日

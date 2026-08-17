@@ -6,13 +6,9 @@
 
 **让 AI 写小说，但读者闻不出 AI 味。**
 
-跑在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 上的小说创作插件 —— 专门写小说，也专门把「AI 味」挡在正文之外。
+跑在 DeepSeek Harness 上的小说创作插件 —— 专门写小说，也专门把「AI 味」挡在正文之外。
 
-[是什么](#是什么) · [安装](#安装) · [特性](#特性) · [技能](#技能) · [架构](#架构) · [项目结构](#项目结构) · [借鉴与致谢](#借鉴与致谢)
-
-<sub>DSH Plugin · 属于 [dsh-plugin](https://github.com/topics/dsh-plugin) 生态</sub>
-
-**安装**：克隆本仓库，把 `skills/` 下 5 个技能复制到 `~/.dsh/skills/`，再以动态插件加载 `plugins/host-novel.js`（Host 工具）+ `plugins/client-novel-ui.js`（章节面板）——详见[安装](#安装)。
+[是什么](#是什么) · [特性](#特性) · [快速开始](#快速开始) · [技能](#技能) · [架构](#架构) · [项目结构](#项目结构) · [借鉴与致谢](#借鉴与致谢)
 
 </div>
 
@@ -28,47 +24,38 @@ NINGLET 是 DeepSeek Harness 生态里的一个**小说创作插件**。它不�
 
 ## 特性
 
-- **反 AI 味引擎**：确定性检测（80+ 禁用词、`的`字密度、句长方差）+ 生成时注入规则 + 落盘前最多一次自动重写。
-- **苏格拉底规划（give me）**：写章前若没给意图，先追问你「核心推进 / 主角状态 / 结尾钩子」三问，把本章意图落成 `story/runtime/chapter-N.intent.md` 再动笔。
+- **反 AI 味引擎**：12 维确定性检测（50+ 禁用词、模板禁用词、AI 过渡词、的字密度、句长方差、段落等长、排比三连、段尾抒情、对话标签重复、套话密度、公式化转折、列表式结构）+ 4 阶段重写（定点清除→结构修复→风格改写→人味注入）。检测发现任何问题全自动走全 4 阶段。
+- **伏笔生命周期**：完整 HookRecord（open→progressing→deferred→resolved），半衰期自动推导（immediate=10章 / mid-arc=30 / endgame=80），stale 过期检测 + blocked 因果链受阻检测，观察者自动抽取并合并（状态不可回退）。
+- **结构化状态树**：currentState 事实表（位置/主角状态/目标/冲突）、结构化章节摘要（events/stateChanges/hookActivity/mood/chapterType）、Markdown 人类可读投影（current_state.md / pending_hooks.md / chapter_summaries.md）。
+- **控制面文档**：author_intent.md（长期意图）+ current_focus.md（近期关注，含过期/受阻伏笔警告）+ book_rules.md（通用 25 条 + 题材专属规则，可编辑）。建书时自动生成，写章后自动刷新。
+- **题材规则体系**：通用 25 条创作规则 + 6 大题材专属规则（玄幻/都市/悬疑/言情/科幻/历史），写章时注入 writer prompt。
+- **苏格拉底规划**：写章前若没给意图，先追问「核心推进 / 主角状态 / 结尾钩子」三问。
 - **章回大纲**：建书时给创作简报，自动生成 8-12 章大纲。
-- **结构化记忆**：每章写完后由「观察者」抽取角色、伏笔，并生成结构化摘要（事件/角色变化/伏笔/结尾），替代粗暴截断。
-- **结构树 + 画布**：右下角「小说」面板——结构视图（大纲 / 章节 / 角色 / 伏笔）+ 画布视图（章节节点连线），一眼看懂整本书。
-- **结构化状态**：每本书的状态是校验后的 JSON（`story/state/state.json`），正文是 Markdown（`chapters/NNN.md`）；坏数据拒绝写入，不滚雪球。
-- **安静编辑部 UI**：写作优先的界面（见 `docs/design-system.md`），连 UI 都去 AI 味——无渐变、无 emoji 图标、无投影堆砌。
-
-## 安装
-
-克隆本仓库，两步装进你的 DeepSeek Harness：
-
-```bash
-git clone https://github.com/XN-289/dsh-NINGLET-novel-Agent.git
-```
-
-**1. 技能（5 个 SKILL.md）** —— 复制到用户技能根，或当前项目的 `.dsh/skills/`（DSH 会自动发现两者）：
-
-```bash
-# Unix
-cp -r NINGLET/skills/* ~/.dsh/skills/
-# Windows (PowerShell)
-Copy-Item -Recurse NINGLET\skills\* $HOME\.dsh\skills\
-```
-
-**2. 工具 + 章节面板** —— 自包含动态插件，不依赖任何 workspace 包。在 DSH 会话里用 `cordis_define` 定义（`plugins/host-novel.js` 作为 `code.host`，`plugins/client-novel-ui.js` 作为 `code.client`），再 `cordis_run` 激活。
-
-> `harness-packages/` 下的 `@deepseek-ai/dsh-tool-ninglet` / `dsh-prompt-ninglet` 是固化进 DSH 核心仓库源码树的形态，面向核心开发者；普通用户走上面的动态插件路径即可。
+- **结构树 + 画布**：右下角「小说」面板——结构视图（大纲/章节/角色/伏笔）+ 画布视图（章节节点连线）。
+- **结构化状态**：每本书的状态是校验后的 JSON（`story/state/state.json`），坏数据拒绝写入。
 
 ## 快速开始
 
 ```bash
-node --test   # 纯函数核心单测：34 个，全绿
+# 1. 纯函数核心单测
+node --test          # 99 个测试，全绿
+
+# 2. 在 DeepSeek Harness 里加载（当前用动态插件 ning-1/pkg-4 运行中）
+#    - Host 工具：plugins/host-novel.js 作为 code.host
+#    - Client 面板：plugins/client-novel-ui.js 作为 code.client
+#    通过 cordis_define / cordis_run 定义并激活
+
+# 3. 在对话里说
+#    「创建一本都市修仙小说《吞天魔帝》」
+#    「写下一章，重点写师徒矛盾」
 ```
 
-在装好技能与插件的 DSH 会话里说：
-
-> 「创建一本都市修仙小说《吞天魔帝》」
-> 「写下一章，重点写师徒矛盾」
-
-状态落盘在**会话工作区**的 `novels/<bookId>/` 下：`story/state/state.json`（权威状态）+ `chapters/NNN.md`（正文）。
+状态落盘在**会话工作区**的 `novels/<bookId>/` 下：
+- `story/state/state.json`（权威状态，含 book/chapters/summaries/hooks/characters/currentState/outline）
+- `chapters/NNN.md`（正文）
+- `story/current_state.md` / `pending_hooks.md` / `chapter_summaries.md`（Markdown 投影，人类可读）
+- `story/author_intent.md` / `current_focus.md` / `book_rules.md`（控制面文档）
+- `story/runtime/chapter-NNN.intent.md`（每章意图存档）
 
 ## 技能
 
@@ -76,7 +63,7 @@ NINGLET 把「写小说」拆成 5 个可被 DeepSeek Harness 直接调用的技
 
 | 技能 | 作用 |
 |---|---|
-| `anti-ai-flavor` | 反 AI 味规则：80+ 禁用词、量化指标、Show-Don't-Tell |
+| `anti-ai-flavor` | 反 AI 味规则：16 个禁用词、量化指标、Show-Don't-Tell |
 | `longform-writing` | 长篇章节生产 + 钩子 / 节奏 / 水章诊断 |
 | `novel-qa` | 10 维一致性审查 + AI 味评分（0-100）|
 | `novel-outline-researcher` | 大纲调研：先读、先问、再给 |
@@ -90,7 +77,7 @@ NINGLET 把「写小说」拆成 5 个可被 DeepSeek Harness 直接调用的技
 ├──────────────────────────────────────────────┤
 │  技能 skills/  （5 个 SKILL.md）              │  ← 反AI味 + 写作 + 审查 + 调研 + 风格
 │  插件 plugins/ （host-novel.js / client）     │  ← Host 领域工具 + Client 章节面板
-│  纯函数 src/   （可独立测试）                  │  ← 反AI味引擎 / 状态 schema / 字数 / bookId
+│  纯函数 src/   （可独立测试）                  │  ← 反AI味引擎(12维) / 伏笔生命周期 / 状态投影 / 控制文档 / 状态 schema / 字数 / bookId
 └──────────────────────────────────────────────┘
 ```
 
@@ -100,11 +87,15 @@ NINGLET 把「写小说」拆成 5 个可被 DeepSeek Harness 直接调用的技
 NINGLET-dsh/
 ├── docs/               # PRD、实现计划、设计系统、research 资产库
 ├── src/                # 纯函数核心（可测试）
-├── tests/              # node --test 单测（32 个）
+│   ├── anti-ai-engine.js     # 12 维反 AI 味检测 + 4 阶段重写规则
+│   ├── hook-lifecycle.js      # 伏笔生命周期（stale/blocked/合并/健康度）
+│   ├── state-projection.js    # 结构化状态 + Markdown 投影生成器
+│   └── control-docs.js        # 控制面文档 + 题材规则体系
+├── tests/              # node --test 单测（99 个）
 ├── skills/             # 5 个技能包
 ├── plugins/            # 动态插件源码
 ├── preset/             # 预设组合
-├── harness-packages/   # 待构建的 DSH 包源码（固化收尾）
+├── harness-packages/   # 待构建的 DSH 包源码
 └── assets/             # logo 等静态资产
 ```
 

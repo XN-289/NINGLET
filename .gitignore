@@ -39,3 +39,10 @@ _ss.txt
 *.bak.*
 
 node_modules/
+# ===== 外部仓库（各自独立发布在 GitHub，勿并入本仓库）=====
+# inkos      -> github.com/Narcooo/inkos
+# distill-novels -> github.com/CloudLiu1008/distill-novels
+# kealin-AI-novels -> github.com/XN-289/kealin-AI-novels
+/inkos/
+/distill-novels/
+/kealin-AI-novels/

@@ -23,7 +23,7 @@ test('插件内联 detectAI 含 severity 字段与 rules 覆盖', () => {
 });
 
 test('插件内联 rewriteRules 含完整约束文本', () => {
-  assert.ok(plugin.includes('一段不超过 3 个'), '插件 rewriteRules 缺的密度阈值');
+  assert.ok(plugin.includes('不超过3个') || plugin.includes('不超过 3 个'), '插件 rewriteRules 缺的密度阈值');
   assert.ok(plugin.includes('长短交替'), '插件 rewriteRules 缺长短交替');
 });
 
@@ -40,4 +40,24 @@ test('插件 validateState 校验 outline/characters 为数组', () => {
 test('插件含 get_structure 聚合 RPC 与观察者抽取', () => {
   assert.ok(plugin.includes('get_structure'), '插件缺 get_structure RPC');
   assert.ok(plugin.includes('小说观察者'), '插件缺观察者抽取');
+});
+
+test('插件含 normalizeHook / mergeHooks 伏笔生命周期', () => {
+  assert.ok(plugin.includes('normalizeHook'), '插件缺 normalizeHook');
+  assert.ok(plugin.includes('mergeHooks'), '插件缺 mergeHooks');
+});
+
+test('插件含 normalizeChapterSummary / renderAllProjections 结构化状态', () => {
+  assert.ok(plugin.includes('normalizeChapterSummary'), '插件缺 normalizeChapterSummary');
+  assert.ok(plugin.includes('renderAllProjections') || plugin.includes('renderHooksProjection'), '插件缺 Markdown 投影');
+});
+
+test('插件含题材规则体系 + 控制面文档', () => {
+  assert.ok(plugin.includes('GENERIC_RULES') || plugin.includes('getRulesForGenre'), '插件缺题材规则');
+  assert.ok(plugin.includes('renderAuthorIntent') || plugin.includes('renderCurrentFocus'), '插件缺控制面文档');
+});
+
+test('插件含 composeContext / auditContinuity 多角色流水线', () => {
+  assert.ok(plugin.includes('composeContext'), '插件缺 composeContext');
+  assert.ok(plugin.includes('auditContinuity'), '插件缺 auditContinuity');
 });

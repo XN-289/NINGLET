@@ -1,3 +1,7 @@
+> ⚠️ **遗留文档（Legacy）**：本文件记录的是 NINGLET 的前身项目 **kealin AI Novels**（独立 Python/Flask 应用，非 DSH 插件）的演进史。
+> 它与 NINGLET（跑在 DeepSeek Harness 上的小说插件）**不是同一个项目**——代码栈、架构、运行方式完全不同。
+> 保留于此仅作**反 AI 味引擎移植蓝本**与历史参考，不反映 NINGLET 的实际状态。NINGLET 的真实进度见 `README.md`、`docs/prd/prd-tracer-bullet.md` 与 `docs/superpowers/plans/2026-08-14-tracer-bullet.md`。
+
 # Changelog — Kealin AI Novels 超级进化记录
 
 ## v4.0.0 - 无限画布 · 专业提示词 (2026-07-10)

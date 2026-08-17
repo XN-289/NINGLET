@@ -1,0 +1,249 @@
+{
+  "book": {
+    "bookId": "book-99b16c",
+    "title": "玄天剑圣",
+    "genre": "玄幻",
+    "brief": "少年林凡出身凡人村落，偶然得到一柄无名古剑和一页残缺剑谱。他以凡人之躯踏上修仙之路，拜入天剑宗外门，从最低微的杂役弟子做起。修炼体系以剑修为核心：剑气、剑意、剑心、剑域四重境界，每重又分九层。主角的金手指是那柄古剑——它不是神器，而是一个被封印的上古剑修残魂，只能指点不能代劳，每次指引都消耗林凡自身精血。故事主线是林凡从外门杂役一步步崛起，靠的不是天赋而是对剑的执着和那柄古剑的指点，最终领悟自己的剑道，成为一代剑圣。核心矛盾：宗门内斗、剑修与法修的道路之争、古剑残魂的真正身份与代价。",
+    "targetChapters": 50,
+    "chapterWords": 3200,
+    "nextChapterIndex": 3
+  },
+  "chapters": [
+    {
+      "index": 1,
+      "title": "第1章",
+      "wordCount": 1559,
+      "filePath": "chapters/001.md",
+      "aiTasteScore": 100,
+      "status": "approved"
+    },
+    {
+      "index": 2,
+      "title": "第2章",
+      "wordCount": 1775,
+      "filePath": "novels/book-99b16c/chapters/002.md",
+      "aiTasteScore": 100,
+      "status": "approved"
+    }
+  ],
+  "summaries": [
+    {
+      "index": 1,
+      "text": "林凡傍晚砍柴归家，家中贫困（爹干咳空衔烟杆、娘捡碎米）。深夜独自赴土梁子废河道，取出三个月前拾得的锈剑与烙字布片（\"气沉、入骨、循脉\"），三个月摸索无果后割指血饲。血渗锈层初无反应，欲裹剑离去时掌心被吸住灼烫起泡，锈层剥落露出灰白金属，残魂断续传下三句口诀：\"剑者，骨中锋\"\"气行筋脉，非力催\"\"想杀人，先把命搁上去\"，随即彻底沉寂，剑身重新生锈，唯剑格旁一小片金属永久裸露。林凡将剑埋回，天将亮时回家，掌心烫伤。"
+    },
+    {
+      "chapter": 2,
+      "title": "第2章",
+      "characters": "林凡，陈算盘（陈久），爹，娘",
+      "events": "1.陈算盘催债，掠走半袋糙米抵利，碾碎爹的烟杆；2.陈算盘透露天剑宗月中设点收外门杂役、需测灵根；3.林凡后山试练口诀，发现掌心烫痕即脉路；4.以循脉之法劈开多年劈不动的柴疙瘩，断面平滑生凉；5.烫痕越过腕纹半寸，领悟'以命作抵'为真；6.一缕热气外泄，被土梁子方向两三里外之物吸走",
+      "stateChanges": "家中糙米被夺，药债三两七钱仍欠；林凡初步掌握沉气循脉，首次发锋成功；掌心烫痕延长半寸越过腕纹（付出首笔代价）；柴疙瘩裂为两半且断面持续发凉；体内一缕热泄往土梁子方向，被未知之物感知",
+      "hookActivity": "布片口诀推进中——循脉已通，但布片只写路不写价，写布片者身份成疑；土梁子埋的那柄东西升级——由单纯埋藏物变为会'咂一口'的活物般存在；新埋天剑宗测灵根一线；爹的病被点明'凡药压不住'，暗示非寻常病",
+      "mood": "压抑清苦、隐忍克制，苦尽处透出一线觉醒的微光，微光里又裹着寒意",
+      "chapterType": "修炼突破+悬念推进"
+    }
+  ],
+  "hooks": [
+    {
+      "hookId": "hook-锈剑的秘密",
+      "name": "锈剑的秘密",
+      "startChapter": 1,
+      "status": "progressing",
+      "lastAdvancedChapter": 1,
+      "expectedPayoff": "残魂身份与来历揭晓",
+      "payoffTiming": "mid-arc",
+      "notes": "血饲唤醒残魂，得三句口诀；残魂身份、血饲代价未明",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-碎布片与口诀",
+      "name": "碎布片与口诀",
+      "startChapter": 1,
+      "status": "progressing",
+      "lastAdvancedChapter": 1,
+      "expectedPayoff": "布片与口诀的关联解开",
+      "payoffTiming": "near-term",
+      "notes": "布片烙字（气沉/入骨/循脉）与口诀对不上，两套功法之谜",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-爹的隐疾",
+      "name": "爹的隐疾",
+      "startChapter": 1,
+      "status": "open",
+      "lastAdvancedChapter": 0,
+      "expectedPayoff": "隐疾真相与家道变故",
+      "payoffTiming": "slow-burn",
+      "notes": "干咳不止、旱烟断了仍空衔烟杆——埋而不点",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-布片口诀与缺失的'价'字",
+      "name": "布片口诀与缺失的'价'字",
+      "startChapter": 2,
+      "status": "progressing",
+      "lastAdvancedChapter": 2,
+      "expectedPayoff": "循脉已验证，但写布片之人为何不写代价——不知还是不敢写",
+      "payoffTiming": "mid-arc",
+      "notes": "循脉已验证，但写布片之人为何不写代价——不知还是不敢写",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-土梁子下埋的那柄东西",
+      "name": "土梁子下埋的那柄东西",
+      "startChapter": 2,
+      "status": "progressing",
+      "lastAdvancedChapter": 2,
+      "expectedPayoff": "喝血烙路之物，林凡决定亲赴起出，隔两三里竟能吸走他的热气",
+      "payoffTiming": "near-term",
+      "notes": "喝血烙路之物，林凡决定亲赴起出，隔两三里竟能吸走他的热气",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-土梁子地下之物的感知",
+      "name": "土梁子地下之物的感知",
+      "startChapter": 2,
+      "status": "open",
+      "lastAdvancedChapter": 0,
+      "expectedPayoff": "林凡发锋时一缕热被其'咂了一口'，双方已被彼此察觉",
+      "payoffTiming": "near-term",
+      "notes": "林凡发锋时一缕热被其'咂了一口'，双方已被彼此察觉",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-天剑宗测灵根",
+      "name": "天剑宗测灵根",
+      "startChapter": 2,
+      "status": "open",
+      "lastAdvancedChapter": 0,
+      "expectedPayoff": "月中青石镇设点，无灵根连杂役不收，林凡是否前往待定",
+      "payoffTiming": "near-term",
+      "notes": "月中青石镇设点，无灵根连杂役不收，林凡是否前往待定",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-爹的怪病",
+      "name": "爹的怪病",
+      "startChapter": 2,
+      "status": "progressing",
+      "lastAdvancedChapter": 2,
+      "expectedPayoff": "'凡药压不住的病'，固本汤三年无效，或非寻常病症",
+      "payoffTiming": "mid-arc",
+      "notes": "'凡药压不住的病'，固本汤三年无效，或非寻常病症",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-柴疙瘩断面之凉",
+      "name": "柴疙瘩断面之凉",
+      "startChapter": 2,
+      "status": "open",
+      "lastAdvancedChapter": 0,
+      "expectedPayoff": "木头断面不该有的凉，隔着两层布仍贴背发凉",
+      "payoffTiming": "near-term",
+      "notes": "木头断面不该有的凉，隔着两层布仍贴背发凉",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    },
+    {
+      "hookId": "hook-陈算盘小舅子在天剑宗外门当管事",
+      "name": "陈算盘小舅子在天剑宗外门当管事",
+      "startChapter": 2,
+      "status": "open",
+      "lastAdvancedChapter": 0,
+      "expectedPayoff": "伏下的关系线，日后或成牵绊或成门路",
+      "payoffTiming": "mid-arc",
+      "notes": "伏下的关系线，日后或成牵绊或成门路",
+      "dependsOn": [],
+      "coreHook": false,
+      "promoted": false
+    }
+  ],
+  "characters": [
+    {
+      "name": "林凡",
+      "role": "protagonist",
+      "desc": "樵户少年，沉默固执，三个月暗中摸索锈剑无果仍不弃"
+    },
+    {
+      "name": "娘",
+      "role": "family",
+      "desc": "持家谨慎，捡碎米、命担水，不多问"
+    },
+    {
+      "name": "爹",
+      "role": "family",
+      "desc": "隐疾干咳，旱烟断绝仍空衔烟杆"
+    },
+    {
+      "name": "陈算盘（陈久）",
+      "role": "反派",
+      "desc": "回春堂账房，刻薄催债掠米碾烟杆，却带回灵根测试的关键消息"
+    }
+  ],
+  "currentState": {
+    "currentLocation": "后山柴坡下山路上，背着两半发凉的柴疙瘩",
+    "protagonistState": "一夜未眠强行发锋一次，饥饿疲惫，掌心烫痕越腕半寸，隐约意识到修炼代价与被窥视的危险",
+    "currentGoal": "先上土梁子起出埋着的那柄东西亲眼看它，月中再赴青石镇天剑宗测灵根",
+    "currentConflict": "家中负债断粮、父亲病重与药债只涨不落的外困，对上报复式修炼需以命作抵、且行踪热气已被地下之物察觉的内险",
+    "currentConstraint": "不能让家人察觉剑与伤口之事",
+    "currentAlliances": "无（独自行动）"
+  },
+  "outline": [
+    {
+      "index": 1,
+      "title": "古剑泣血 —— 凡人少年林凡偶得无名古剑，拜入天剑宗沦为杂役，以精血为引唤醒内中残魂初窥剑道。"
+    },
+    {
+      "index": 2,
+      "title": "杂役之辱 —— 面对外门法修弟子的阶级欺凌，林凡忍辱负重，暗中凭借残魂指点与残谱修成第一缕剑气。"
+    },
+    {
+      "index": 3,
+      "title": "外门大考 —— 宗门杂役考核中危机暗伏，林凡燃烧精血换取残魂的绝杀指点，一剑逼退强敌震惊外门。"
+    },
+    {
+      "index": 4,
+      "title": "法剑之争 —— 被迫卷入外门执事争夺资源的内斗，林凡看清法修对剑修的打压，决意以纯粹剑道破局。"
+    },
+    {
+      "index": 5,
+      "title": "残卷重光 —— 寻得铸剑灵材修复残缺剑谱，残魂代价反噬加剧，林凡在生死一线突破剑气九层巅峰。"
+    },
+    {
+      "index": 6,
+      "title": "剑气破阵 —— 外门大比风云骤起，林凡以极致的剑气连斩法修天才，彻底打破外门灵根至上的常理。"
+    },
+    {
+      "index": 7,
+      "title": "残魂之秘 —— 夺得大比魁首进入宗门秘境，残魂消耗巨量精血显露上古剑修身份，揭开剑修没落的隐秘。"
+    },
+    {
+      "index": 8,
+      "title": "剑意觉醒 —— 遭内门嫉妒弟子暗下杀手，林凡在绝境中明悟对剑的极致执着，不靠残魂自生第一缕剑意。"
+    },
+    {
+      "index": 9,
+      "title": "明心见性 —— 宗门内斗白热化引致大乱，林凡斩破心头迷惘铸就坚韧剑心，凭自身意志反杀强敌惊动高层。"
+    },
+    {
+      "index": 10,
+      "title": "剑圣之始 —— 粉碎宗门夺权阴谋并终结内乱，林凡重塑自身剑道路基，与残魂结下契约踏上通向剑圣的险途。"
+    }
+  ]
+}
